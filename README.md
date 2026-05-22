@@ -1,39 +1,66 @@
-# Module 2 Project – Team Assignment (Enterprise Structure)
+# SCTP Team 2 — Project 2
+## Olist E-Commerce: End-to-End Data & ML Platform (V1, on GCP)
 
-## Context
-For full project requirements and scope, refer to:
-`./assignment/Module 2 Assignment Project V2.pdf`
+An open **lakehouse** pipeline: raw CSVs → BigQuery Iceberg → dbt star schema (medallion) → quality gates → analytics, orchestrated by Dagster. Built on GCP managed services for V1; designed to migrate to on-prem OSS (see `MIGRATION.md`).
 
----
+> **Folder naming:** top-level folders are prefixed `p1_`…`p7_` to show pipeline order. Inner folders (dbt `models/`, `macros/`, `.github/workflows/`, etc.) stay bare because the tools require those exact names.
 
-## Overview
-This document defines the module ownership, responsibilities, deliverables, and enterprise role mapping for the end-to-end data engineering project.
+### Architecture at a glance (medallion)
 
----
+| Tier | Where (BigQuery) | Produced by | Folder |
+|---|---|---|---|
+| **Bronze** | `raw_commerce` | dlt / Meltano (EL) | `p1_el/bronze/` (tier docs) |
+| **Silver** | `silver_commerce` | dbt (cleaned, conformed) | `p3_dbt_project/models/silver/` |
+| **Gold** | `gold_commerce` (Iceberg) | dbt (marts) | `p3_dbt_project/models/gold/` |
 
-## Team Structure Summary
-- Leads are responsible for module ownership and technical direction
-- Members support implementation, testing, and execution
-- All members contribute to final documentation and presentation
+### Pipeline flow
+```
+p1_el (dlt/Meltano)   →  BRONZE raw_commerce
+                              │
+p3 dbt silver         →  SILVER silver_commerce  (clean/type/conform)
+                              │
+p3 dbt gold           →  GOLD gold_commerce      (dim_/fct_/mart_, Iceberg)
+                              │
+p4_data_quality       →  tests gate the gold marts
+                              │
+p5_analytics          →  KPIs, charts, insights
+                              │
+p6_orchestration      →  Dagster runs the whole chain on a schedule
+```
 
----
+### Folder map (every folder has its own README)
+| Folder | Module | Owner | Produces |
+|---|---|---|---|
+| `p1_el/` | M1 Ingestion | John / Bryan | bronze raw tables (dlt + meltano) |
+| `p1_el/bronze/` | M1 (tier) | John / Bryan | bronze tier contract/docs |
+| `p2_warehouse_design/` | M2 Design | Charmaine / Soon Meng | ERD + star schema spec |
+| `p3_dbt_project/` | M3 ELT | **Hoong Jun** / Bryan | silver + gold models |
+| `p3_dbt_project/models/silver/` | M3 | Hoong Jun / Bryan | silver_commerce.* |
+| `p3_dbt_project/models/gold/` | M3 | Hoong Jun / Bryan | gold_commerce.* (Iceberg) |
+| `p3_dbt_project/macros/cross_db/` | M3 | Hoong Jun | migration-seam macros |
+| `p3_dbt_project/tests/` | M3/M4 | Charmaine / Jenn Fang | singular/custom tests |
+| `p3_dbt_project/seeds/` | M3 | Hoong Jun / Bryan | static reference tables |
+| `p4_data_quality/` | M4 QA | Charmaine / Jenn Fang | tests + QA report |
+| `p5_analytics/` | M5 Analysis | John / Chun Wei | notebooks + insights |
+| `p6_orchestration/` | M6 Orchestration | **Hoong Jun** / Soon Meng | Dagster pipeline |
+| `.github/workflows/` | M6 | Hoong Jun / Soon Meng | scheduled trigger + CI (must stay at root) |
+| `p7_docs/` | M7 Docs | All | report + deck + diagrams |
 
-## Module Assignments
+### Quick start
+```bash
+# 1. GCP setup (see p1_el/README.md for full steps)
+gcloud config set project sctp-team2-project2
+# 2. Ingest (bronze)
+python p1_el/dlt/load_olist.py
+# 3. Transform + test (silver + gold)
+cd p3_dbt_project && dbt deps && dbt build
+# 4. Orchestrate (runs all of the above as assets)
+cd p6_orchestration && dagster dev
+```
 
-| Module | Lead | Member Support | Responsibilities | Deliverables | Enterprise Role Mapping |
-|---|---|---|---|---|---|
-| 1. Data Ingestion | John Phang | Bryan Teo | Load raw datasets into warehouse, build ingestion scripts, define raw tables, handle missing data and data types | Python ingestion scripts, raw tables, ingestion pipeline workflow | Data Engineering |
-| 2. Data Warehouse Design | Charmaine | Soon Meng | Design star schema, build fact and dimension tables, define relationships, design warehouse structure using ingested data | ERD diagram, star schema design, SQL warehouse models | Data Architecture / Data Modeling |
-| 3. ELT Pipeline (dbt) | Hoong Jun | Bryan Teo | Build dbt transformation models, clean and transform data, create business metrics and derived fields from warehouse layer | dbt staging/intermediate/marts models, transformation SQL | Analytics Engineering |
-| 4. Data Quality Testing | Charmaine | Ang Jenn Fang | Define validation rules, implement data quality checks, ensure referential integrity and business logic accuracy | Great Expectations tests, SQL validation scripts, QA reports | Data Quality / Data Governance |
-| 5. Data Analysis with Python | John Phang | Lim Chun Wei | Perform EDA, generate KPIs, build insights, create visualizations and business recommendations | Jupyter notebooks, charts, KPI analysis, insights report | Data Analytics / Business Intelligence |
-| 6. Pipeline Orchestration | Hoong Jun | Soon Meng | Automate pipeline execution, schedule workflows, monitor pipeline runs and ensure end-to-end data flow reliability | Airflow/GitHub Actions workflows, orchestration scripts | Data Orchestration / Data Operations |
-| 7. Documentation & Executive Presentation | All Team Members | All Team Members | Technical documentation, architecture diagrams, storytelling, slide deck creation, rehearsal, final presentation delivery | README, architecture diagrams, final report, slide deck, presentation | Cross-functional Data Delivery |
-
----
-
-## Notes
-- Each module lead is accountable for final output quality
-- Members support implementation and cross-learning across modules
-- Final presentation is a shared responsibility across all members
-- Ensure alignment with project requirements in the referenced PDF
+### Project conventions
+- **Medallion naming:** silver = staging + intermediate combined (no separate staging folder); bronze = the raw dataset EL lands.
+- **Folder order:** `p1_`…`p7_` prefixes encode pipeline sequence; inner tool folders stay bare.
+- **dbt owns all writes** to silver/gold — never hand-write SQL into those datasets.
+- **Models read one tier down only:** silver←bronze, gold←silver. Never skip a tier.
+- **Migration seams** (dual-target profiles, dialect macros) are intentional — see `MIGRATION.md`.
