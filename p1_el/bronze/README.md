@@ -1,6 +1,7 @@
 # Bronze — Raw Landing Tier  (medallion: BRONZE)
 **Produced by:** Module 1 (EL — dlt / Meltano) · **Owner:** John / Bryan
 
+
 ### BigQuery Dataset
 | BigQuery Dataset | Dataset ID  | URL |
 | ---| --- | --- |
@@ -19,7 +20,7 @@
 |8|	3096 | olist_sellers_dataset.csv | OK | 3,095 | olin_bronze | olist_sellers_dataset | |	
 |9|	71 | product_category_name_translation.csv | OK | 71 | olin_bronze | product_category_name_translation | Using manual definition of schema. Skipped header 1 row. Per BQ docu header rows where all fields are strings may not have the header detected |
 
-### Raw data files in Google Cloud Storage
+### Raw data files (in Google Cloud Storage)
 | Project ID | Bucket Name | URL |
 | --- | --- | --- |
 | sctp-team2-project2-elt | m2_olin_raw | https://console.cloud.google.com/storage/browser/m2_olin_raw?project=sctp-team2-project2-elt | 
