@@ -9,7 +9,7 @@
 
 ### Extract and Load Summary 
 | | CSV line count | Filename |	Loaded in BQ | Rows loaded in BQ | BQ dataset (schema name) | BQ tablename | Remarks |
-| --- | ---- |
+| --- | --- | --- |	--- | --- | --- | --- | --- |
 |1|	99442 |	olist_customers_dataset.csv | OK | 99,441 | olin_bronze | olist_customers_dataset | |
 |2| 1000164 | olist_geolocation_dataset.csv | OK | 1,000,163 | olin_bronze | olist_geolocation_dataset | |		
 |3| 112651 | olist_order_items_dataset.csv | OK | 112,650 | olin_bronze | olist_order_items_dataset | |		
