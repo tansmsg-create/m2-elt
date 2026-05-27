@@ -10,9 +10,9 @@ Design the **star schema** that Module 3 (dbt) implements. This folder is the *d
 
 ## Produces (outputs)
 - **`m2-elt_star_schema.drawio`** — overview plan of the dimensional model.
-  <img width="1200" height="640" alt="image" src="https://github.com/user-attachments/assets/d60473b6-d537-44ea-918d-b25ac21167d6" />
   Documentation: [Drive](https://drive.google.com/file/d/1Cb-3G_E0OHcwrz1ZmtNZbWm5-XjAtr71/view?usp=drive_link).
 - **`PDF: m2-elt_star_schema`** — entity-relationship diagram of the dimensional model.
+  <img width="1200" height="640" alt="image" src="https://github.com/user-attachments/assets/d60473b6-d537-44ea-918d-b25ac21167d6" />
   Online: [dbdiagramio](https://dbdiagram.io/d/m2-elt-6a16fd13b62396d22c82645d)
   Documentation: [Drive](https://drive.google.com/file/d/1U9KXC5qSOBrSx2dRwdxkpBp_2FdNcUku/view?usp=drive_link)
 - tbc: **`star_schema.md`** — the dimensional model spec: dimensions, facts, grains, surrogate keys, and the consumer-mart column contracts.
