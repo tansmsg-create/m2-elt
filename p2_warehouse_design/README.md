@@ -5,12 +5,17 @@
 Design the **star schema** that Module 3 (dbt) implements. This folder is the *design*, not the build — it defines the contract everyone downstream depends on.
 
 ## Needs (inputs)
-- The bronze table shapes from M1 (`raw_commerce.*` columns).
+- <img width="50" height="30" alt="image" src="https://github.com/user-attachments/assets/8f942755-4d55-49a7-9971-9f11ee78ad84" /> The bronze table shapes from M1 (`raw_commerce.*` columns).
 - Understanding of the business questions M5 must answer (revenue, segmentation, delivery).
 
 ## Produces (outputs)
-- **`erd.drawio`** — entity-relationship diagram of the dimensional model.
-- **`star_schema.md`** — the dimensional model spec: dimensions, facts, grains, surrogate keys, and the consumer-mart column contracts.
+- **`m2-elt_star_schema.drawio`** — overview plan of the dimensional model.
+  <img width="35" height="60" alt="image" src="https://github.com/user-attachments/assets/d60473b6-d537-44ea-918d-b25ac21167d6" />
+  Documentation: [Drive](https://drive.google.com/file/d/1Cb-3G_E0OHcwrz1ZmtNZbWm5-XjAtr71/view?usp=drive_link).
+- **`PDF: m2-elt_star_schema`** — entity-relationship diagram of the dimensional model.
+  Online: [dbdiagramio](https://dbdiagram.io/d/m2-elt-6a16fd13b62396d22c82645d)
+  Documentation: [Drive](https://drive.google.com/file/d/1U9KXC5qSOBrSx2dRwdxkpBp_2FdNcUku/view?usp=drive_link)
+- tbc: **`star_schema.md`** — the dimensional model spec: dimensions, facts, grains, surrogate keys, and the consumer-mart column contracts.
 
 ## Hand-off to next (→ M3, M4, M5)
 This is the **central contract**. Once `star_schema.md` is committed:
