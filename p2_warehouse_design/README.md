@@ -15,7 +15,8 @@ Design the **star schema** that Module 3 (dbt) implements. This folder is the *d
   <img width="1200" height="640" alt="image" src="https://github.com/user-attachments/assets/d60473b6-d537-44ea-918d-b25ac21167d6" />
   Online: [dbdiagramio](https://dbdiagram.io/d/m2-elt-6a16fd13b62396d22c82645d)
   Documentation: [Drive](https://drive.google.com/file/d/1U9KXC5qSOBrSx2dRwdxkpBp_2FdNcUku/view?usp=drive_link)
-- tbc: **`star_schema.md`** — the dimensional model spec: dimensions, facts, grains, surrogate keys, and the consumer-mart column contracts.
+- Problem Statement and Business Questions, [link](https://docs.google.com/document/d/1geYQtT6bjmq3rdpn3qysy86DH5Obn2BB2E5qaGAfY4s/edit?usp=drive_link)
+- Refer to [file on Problem Statement and Business Questions](https://docs.google.com/document/d/1geYQtT6bjmq3rdpn3qysy86DH5Obn2BB2E5qaGAfY4s/edit?usp=drive_link): **`star_schema.md`** — the dimensional model spec: dimensions, facts, grains, surrogate keys, and the consumer-mart column contracts.
 
 ## Hand-off to next (→ M3, M4, M5)
 This is the **central contract**. Once `star_schema.md` is committed:
