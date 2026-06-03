@@ -13,3 +13,5 @@ LEFT JOIN {{ source('brazil_ecommerce', 'product_category_name_translation') }} 
     ON products.product_category_name = category.string_field_0
 LEFT JOIN {{ source('brazil_ecommerce', 'olist_order_items_dataset') }} AS items 
     ON products.product_id = items.product_id
+WHERE
+    items.order_item_id IS NOT NULL

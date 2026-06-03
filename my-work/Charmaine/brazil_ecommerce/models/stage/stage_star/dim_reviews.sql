@@ -8,3 +8,4 @@ SELECT
     --review_creation_date,
     CAST(review_answer_timestamp AS TIMESTAMP) AS review_answer_timestamp
 FROM {{ source('brazil_ecommerce', 'olist_order_reviews_dataset') }}
+WHERE order_id IS NOT NULL

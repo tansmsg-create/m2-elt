@@ -23,7 +23,8 @@ SELECT
     b.price,
     b.freight_value,
     c.payment_sequential,
-    c.payment_type,
+    COALESCE(c.payment_type, 'not_defined') AS payment_type,
+        -- Replace null status with 'not_defined' (an accepted value)
     c.payment_installments,
     c.payment_value
 FROM source_a orders
