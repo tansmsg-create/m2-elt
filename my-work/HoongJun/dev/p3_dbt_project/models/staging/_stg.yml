@@ -1,0 +1,104 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: "Cleaned orders: typed timestamps, Singer metadata dropped, deduped on order_id."
+    columns:
+      - name: order_id
+        description: "Primary key. Unique after dedupe; not_null guards against bad raw rows."
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "FK to stg_customers. One customer_id per order in the Olist dataset."
+        tests:
+          - not_null
+      - name: order_status
+        description: "Order lifecycle status (delivered, shipped, canceled, ...)."
+      - name: order_purchased_at
+        description: "When the order was placed (cast from string to timestamp)."
+
+  - name: stg_customers
+    description: "Cleaned customers, deduped on customer_id."
+    columns:
+      - name: customer_id
+        description: "Primary key (per-order customer key)."
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: "Stable identity across orders (a customer may have many customer_ids)."
+        tests:
+          - not_null
+
+  - name: stg_order_items
+    description: "Cleaned order line items, deduped on (order_id, order_item_id)."
+    columns:
+      - name: order_id
+        description: "FK to stg_orders."
+        tests:
+          - not_null
+      - name: order_item_id
+        description: "Line sequence within the order. Composite key with order_id."
+        tests:
+          - not_null
+      - name: product_id
+        description: "FK to stg_products."
+        tests:
+          - not_null
+      - name: price
+        description: "Item price (numeric)."
+
+  - name: stg_order_payments
+    description: "Cleaned payments, deduped on (order_id, payment_sequential)."
+    columns:
+      - name: order_id
+        description: "FK to stg_orders."
+        tests:
+          - not_null
+      - name: payment_value
+        description: "Payment amount (numeric)."
+
+  - name: stg_order_reviews
+    description: "Cleaned reviews, deduped on (review_id, order_id)."
+    columns:
+      - name: review_id
+        description: "Review identifier (can recur across orders)."
+        tests:
+          - not_null
+      - name: order_id
+        description: "FK to stg_orders."
+        tests:
+          - not_null
+      - name: review_score
+        description: "1-5 rating (cast to int)."
+
+  - name: stg_products
+    description: "Cleaned products (typo lenght->length fixed), deduped on product_id."
+    columns:
+      - name: product_id
+        description: "Primary key."
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_geolocation
+    description: "Cleaned geolocation; lat/lng typed. No natural key (many coords per zip)."
+    columns:
+      - name: geolocation_zip_code_prefix
+        description: "Zip prefix (string identifier; not unique on its own)."
+        tests:
+          - not_null
+
+  - name: stg_product_category_name_translation
+    description: "PT->EN category lookup, deduped on product_category_name."
+    columns:
+      - name: product_category_name
+        description: "Primary key (Portuguese category name)."
+        tests:
+          - unique
+          - not_null
+      - name: product_category_name_english
+        description: "English translation."
+        tests:
+          - not_null

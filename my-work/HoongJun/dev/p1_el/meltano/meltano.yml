@@ -1,0 +1,82 @@
+default_environment: dev
+project_id: sctp-team2-meltano
+python: python3.11        # build plugin venvs with 3.11 (avoids pendulum 2.x build fail on 3.12)
+
+environments:
+  - name: dev
+
+plugins:
+  extractors:
+    # ── MAIN: Olist CSVs → bronze (the project's EL comparison vs dlt/webapp) ──
+    - name: tap-csv
+      variant: meltanolabs
+      pip_url: git+https://github.com/MeltanoLabs/tap-csv.git
+      config:
+        files:
+          - entity: orders
+            path: ../data/olist_orders_dataset.csv
+            encoding: utf-8-sig
+            keys: [order_id]
+          - entity: order_items
+            path: ../data/olist_order_items_dataset.csv
+            encoding: utf-8-sig
+            keys: [order_id, order_item_id]
+          - entity: customers
+            path: ../data/olist_customers_dataset.csv
+            encoding: utf-8-sig
+            keys: [customer_id]
+          - entity: products
+            path: ../data/olist_products_dataset.csv
+            encoding: utf-8-sig
+            keys: [product_id]
+          - entity: payments
+            path: ../data/olist_order_payments_dataset.csv
+            encoding: utf-8-sig
+            keys: [order_id, payment_sequential]
+          - entity: reviews
+            path: ../data/olist_order_reviews_dataset.csv
+            encoding: utf-8-sig
+            keys: [review_id]
+          - entity: sellers
+            path: ../data/olist_sellers_dataset.csv
+            encoding: utf-8-sig
+            keys: [seller_id]
+          - entity: geolocation
+            path: ../data/olist_geolocation_dataset.csv
+            encoding: utf-8-sig
+            keys: []
+          - entity: category_translation
+            path: ../data/product_category_name_translation.csv
+            encoding: utf-8-sig
+            keys: [product_category_name]
+
+    # ── DEMO: live API source — shows what Singer/Meltano is actually FOR ──
+    #    Pulls real-time UK grid carbon-intensity data over HTTP (no file).
+    #    This is the load Meltano is good at: a live source the webapp can't do.
+    - name: tap-carbon-intensity
+      variant: meltano
+      pip_url: git+https://gitlab.com/meltano/tap-carbon-intensity.git
+
+  loaders:
+    # main loader → bronze dataset (from .env)
+    - name: target-bigquery
+      variant: z3z1ma
+      pip_url: git+https://github.com/z3z1ma/target-bigquery.git "setuptools<81"
+      config:
+        project: ${GCP_PROJECT}
+        dataset: ${BQ_DATASET}
+        location: ${BQ_LOCATION}
+        credentials_path: ${GOOGLE_APPLICATION_CREDENTIALS}
+        method: batch_job
+        denormalized: true
+
+    # demo loader → SEPARATE dataset so the API demo doesn't touch Olist bronze
+    - name: target-bigquery-demo
+      inherit_from: target-bigquery
+      config:
+        project: ${GCP_PROJECT}
+        dataset: demo_streaming        # separate dataset for the live-API demo
+        location: ${BQ_LOCATION}
+        credentials_path: ${GOOGLE_APPLICATION_CREDENTIALS}
+        method: batch_job
+        denormalized: true

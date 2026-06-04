@@ -1,0 +1,39 @@
+
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'm2_elt'
+version: '1.0.0'
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'm2_elt'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the "models/" directory. You probably won't need to change these!
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:         # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_packages"
+
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+# dbt layers (see README): staging = cleaned/typed/conformed, marts = dims/facts/marts.
+# Per-model overrides go in individual files via the `{{ config(...) }}` macro.
+models:
+  m2_elt:
+    staging:
+      +materialized: view
+      +dataset: olin_silver_dev_jun
+    marts:
+      +materialized: table
+      +dataset: olin_gold_dev_jun
+      +catalog_name: iceberg_marts   # routes marts to BigLake-managed Iceberg (see catalogs.yml)
