@@ -1,0 +1,7 @@
+
+target/
+dbt_packages/
+logs/
+
+# local profile — points at a machine-local service-account keyfile
+profiles.yml

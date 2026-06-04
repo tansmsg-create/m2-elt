@@ -1,0 +1,57 @@
+version: 1
+default_environment: dev
+project_id: tap-demo-api-poc
+
+# ─────────────────────────────────────────────────────────────────────────
+# A Meltano PROJECT can hold many extractors (taps) and many loaders
+# (targets). A single `meltano run` wires ONE tap to ONE target. You are
+# NOT limited to one of each — define as many as you like and mix per run.
+# ─────────────────────────────────────────────────────────────────────────
+
+plugins:
+
+  # ── EXTRACTORS (taps) ──────────────────────────────────────────────────
+  extractors:
+    - name: tap-demo-api
+      namespace: tap_demo_api
+      # Install our local custom tap (the code in ./tap_demo_api).
+      # For a published tap you'd put a PyPI name or git URL here instead.
+      pip_url: -e .
+      executable: tap-demo-api
+      capabilities:
+        - state          # supports incremental replication / bookmarks
+        - catalog        # accepts a catalog file
+        - discover       # can emit a catalog via --discover
+      config:
+        api_url: https://jsonplaceholder.typicode.com
+      # Secrets like api_token should NOT be written here — set them via
+      # environment variables, e.g.  export TAP_DEMO_API_API_TOKEN=...
+      select:
+        - users.*        # stream selection: pick which streams/fields sync
+        - posts.*
+
+  # ── LOADERS (targets) ──────────────────────────────────────────────────
+  # Multiple targets defined; choose which one a given run uses.
+  loaders:
+    - name: target-jsonl
+      variant: andyh1203
+      pip_url: target-jsonl
+      config:
+        destination_path: output
+
+    - name: target-duckdb        # a "real" analytical destination
+      variant: jwills
+      pip_url: target-duckdb
+      config:
+        filepath: warehouse.duckdb
+        default_target_schema: raw
+
+    # You could add target-postgres, target-snowflake, target-s3, etc.
+    # the same way — the tap doesn't change at all.
+
+# ─────────────────────────────────────────────────────────────────────────
+# Environments let you swap config per stage (dev / staging / prod)
+# ─────────────────────────────────────────────────────────────────────────
+environments:
+  - name: dev
+  - name: prod

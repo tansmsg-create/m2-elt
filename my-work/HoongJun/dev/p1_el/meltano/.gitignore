@@ -1,0 +1,4 @@
+.meltano/
+*.log
+plugins/
+.env

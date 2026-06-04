@@ -1,19 +1,13 @@
 [project]
-name = "p1-el"
+name = "p1-el-webapp"
 version = "0.1.0"
-description = "SCTP Team 2 · Module 1 — Extract & Load (CSV → BigQuery bronze)"
+description = "SCTP Team 2 · M1 — CSV → BigQuery uploader (Flask web UI)"
 requires-python = ">=3.11"
 dependencies = [
-    # shared / auth + data
-    "python-dotenv>=1.0",
-    "google-cloud-bigquery>=3.25",
-    "google-cloud-storage>=2.16",
-    "pandas>=2.0",
-    # EL via dlt
-    "dlt[bigquery]>=0.5",
-    # webapp uploader
     "flask>=3.0",
-    "gunicorn>=21.0",
+    "google-cloud-bigquery>=3.25",
+    "python-dotenv>=1.0",
+    "gunicorn>=21.0",          # production server (Cloud Run)
 ]
 
 [dependency-groups]

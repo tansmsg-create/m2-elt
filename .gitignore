@@ -37,3 +37,7 @@
 
 # Logs
 **/*.log
+
+
+# Data
+**/data/

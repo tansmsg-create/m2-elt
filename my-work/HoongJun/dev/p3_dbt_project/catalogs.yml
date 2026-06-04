@@ -1,0 +1,11 @@
+catalogs:
+  - name: iceberg_marts
+    active_write_integration: biglake_metastore
+    write_integrations:
+      - name: biglake_metastore
+        # GCS path where dbt writes the Parquet data + Iceberg metadata.
+        # The bucket MUST already exist and be in the SAME region as your BQ datasets.
+        external_volume: 'gs://sctp-team2-project2-data/warehouse'
+        table_format: iceberg
+        file_format: parquet
+        catalog_type: biglake_metastore
