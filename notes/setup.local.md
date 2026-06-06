@@ -20,17 +20,53 @@ git clone <repo-url> && cd m2-elt
 ```
 
 ## 2. Secrets + env
+
+### 2a. Service-account keyfile
+
+Check if the keyfile already exists:
+```bash
+ls secrets/sctp-team2-project2-elt-1853e88c8665.json
+```
+
+If it's **missing**, download it from the team Google Drive:
+> **Google Drive → SCTP Team2 → keys → `sctp-team2-project2-elt-1853e88c8665.json`**
+
+Then place it in the repo:
 ```bash
 mkdir -p secrets
-cp /path/to/sctp-team2-project2-elt-1853e88c8665.json secrets/   # from the vault
-
-cp .env.example .env.dev        # defaults already point at the canonical names
-# .env.dev sets: GCP_PROJECT, GOOGLE_APPLICATION_CREDENTIALS=./secrets/...,
-# BQ_LOCATION=US, BQ_BRONZE/STAGE/GOLD datasets (=_dev), OLIST_DATA_DIR=./datasets
+cp ~/Downloads/sctp-team2-project2-elt-1853e88c8665.json secrets/
 ```
+
+> **Never commit this file** — it is git-ignored.
+
+### 2b. Environment file
+
+Check if `.env.dev` already exists:
+```bash
+ls .env.dev
+```
+
+If it's **missing**, create it from the example:
+```bash
+cp .env.example .env.dev
+```
+
+Then open `.env.dev` and confirm these values match your setup:
+```dotenv
+GCP_PROJECT=sctp-team2-project2-elt
+GOOGLE_APPLICATION_CREDENTIALS=./secrets/sctp-team2-project2-elt-1853e88c8665.json
+BQ_LOCATION=US
+BQ_BRONZE_DATASET=olist_bronze_dev
+BQ_STAGE_DATASET=olist_stage_dev
+BQ_GOLD_DATASET=olist_gold_mart_dev
+OLIST_DATA_DIR=./datasets
+```
+
 > The dbt profile uses `method: oauth`, which reads `GOOGLE_APPLICATION_CREDENTIALS`.
 > No `gcloud auth` is required if the keyfile is present. (If you'd rather use your own
 > login: `gcloud auth application-default login` and leave the keyfile path unset.)
+
+> **Verify:** `cat .env.dev` shows the values above and `ls secrets/*.json` shows the keyfile.
 
 ## 3. Create the conda env + install
 ```bash
