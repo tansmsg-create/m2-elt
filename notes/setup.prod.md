@@ -110,7 +110,14 @@ gcloud builds submit --config cloudbuild.yaml --substitutions=_IMAGE="$IMAGE" .
 
 ## 4. Prepare the two prod config files (repo root, git-ignored)
 
-**`.env.prod`** — note `GOOGLE_APPLICATION_CREDENTIALS` points at the *in-container* mount path:
+### `.env.prod`
+
+Check the team Google Drive first — a pre-filled `.env.prod` may already be there:
+> **[Google Drive → SCTP Team2 → keys](https://drive.google.com/drive/u/1/folders/16cAsp_Pcq10lgHRpRnOQkW1scUHejuGe)**
+>
+> Download `.env.prod` from there and copy it to `$REPO_ROOT`.
+
+If it's not in Drive, create it manually — note `GOOGLE_APPLICATION_CREDENTIALS` points at the *in-container* mount path:
 
 ```dotenv
 GCP_PROJECT=sctp-team2-project2-elt
@@ -126,14 +133,25 @@ OLIST_ENV=prod
 GOOGLE_APPLICATION_CREDENTIALS=/secrets/sa.json
 ```
 
-**`.env.key`** — copy your existing SA keyfile (from the repo root):
+### `.env.key` (service-account keyfile)
 
+Check if the keyfile already exists locally:
+```bash
+ls "$REPO_ROOT/secrets/sctp-team2-project2-elt-1853e88c8665.json"
+```
+
+If it's **missing**, download it from the team Google Drive:
+> **[Google Drive → SCTP Team2 → keys](https://drive.google.com/drive/u/1/folders/16cAsp_Pcq10lgHRpRnOQkW1scUHejuGe)**
+>
+> Download `sctp-team2-project2-elt-1853e88c8665.json` and place it in `secrets/`.
+
+Then copy it to `.env.key` (the name the container expects):
 ```bash
 cd "$REPO_ROOT"
 cp secrets/sctp-team2-project2-elt-1853e88c8665.json .env.key
 ```
 
-> Both match `**/.env.*` in `.gitignore`, so neither is committed. They live on the VM only.
+> Both `.env.prod` and `.env.key` match `**/.env.*` in `.gitignore` — neither is committed. They live on the VM only.
 
 ## 5. Create the VM
 
