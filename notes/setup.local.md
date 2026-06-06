@@ -46,12 +46,16 @@ python -c "import dotenv, dagster_dbt, google.cloud.bigquery, dbt.adapters.bigqu
 ```
 > If `import dotenv` fails, run `pip install python-dotenv` (some pip resolvers skip it).
 
+> **Verify:** `deps OK` printed with no errors.
+
 ## 4. Get the raw CSVs into `datasets/`
 The pipeline loads from `datasets/` by default. If the folder is empty, pull from GCS:
 ```bash
 gsutil -m cp 'gs://m2_olin_raw/*.csv' datasets/
 # (or copy the 9 olist_*.csv + product_category_name_translation.csv in by hand)
 ```
+
+> **Verify:** `ls datasets/*.csv | wc -l` should show **10** files (9 olist_* + category translation).
 
 ## 5. Run it
 
@@ -62,6 +66,9 @@ make dev                        # Dagster UI at http://localhost:3000
 In the UI, materialize the job **`olist_full_refresh`**: it loads bronze, then builds
 the stage views and gold tables in dependency order. Narrower jobs: **`stg_only`**,
 **`gold_mart_only`**.
+
+> **Verify (Dagster UI):** After materializing, go to **Assets** — all assets should show
+> a green tick. Any failure shows red; click the asset to see logs.
 
 ### Option B — CLI, step by step
 ```bash
@@ -75,11 +82,21 @@ for t, fn in config.CSV_FILES.items():
     print('loaded', t)
 "
 cd ../..
+```
 
+> **Verify (BigQuery):** Open [BigQuery Console](https://console.cloud.google.com/bigquery) →
+> project `sctp-team2-project2-elt` → dataset `olist_bronze_dev`. You should see 9 tables
+> (`olist_*_raw`). Click any table → **Preview** to confirm rows loaded.
+
+```bash
 # 5b-ii. Build + test the dbt models against BigQuery
 make dbt-build ENV=dev          # = dbt deps + dbt build (stage views + gold tables)
 make dbt-test  ENV=dev          # run just the tests
 ```
+
+> **Verify (BigQuery):** Check datasets `olist_stage_dev` (9 views) and `olist_gold_mart_dev`
+> (5 tables: `fact_orders` + 4 `dim_*`). Terminal output should end with
+> `PASS=51 ... ERROR=0`.
 
 ### Option C — Meltano load path instead of manual
 ```bash
@@ -87,7 +104,9 @@ export BRONZE_LOAD_METHOD=meltano
 cd p1_el/meltano-raw-csv && make setup && make run   # tap-csv -> target-bigquery
 ```
 
-## 6. Verify
+> **Verify (BigQuery):** Same as Option B step i — check `olist_bronze_dev` for 9 tables.
+
+## 6. Verify end-to-end
 A successful full run produces (in project `sctp-team2-project2-elt`):
 - **`olist_bronze_dev`** — 9 raw tables (`olist_*_raw`, row counts == CSV records).
 - **`olist_stage_dev`** — 9 `stg_*` **views**.
@@ -96,8 +115,14 @@ A successful full run produces (in project `sctp-team2-project2-elt`):
 - `dbt build` ends with `PASS=51 ... ERROR=0` (14 models + 37 tests).
 
 ```bash
+# Quick CLI check
+bq --project_id=sctp-team2-project2-elt ls olist_bronze_dev
+bq --project_id=sctp-team2-project2-elt ls olist_stage_dev
 bq --project_id=sctp-team2-project2-elt ls olist_gold_mart_dev
 ```
+
+> **Verify (Dagster UI):** Go to **Jobs → `olist_full_refresh` → Runs** — the latest run
+> should show **SUCCESS** (green). Click into it to see per-asset timing and logs.
 
 ## 7. Personal sandbox (`.env.<name>`)
 To avoid clobbering the shared `_dev` datasets, work in your own datasets via the
@@ -120,8 +145,10 @@ location, dbt target) is identical to dev — only the datasets differ. `.env.<n
 files are git-ignored.
 
 ## 8. Prod
-Set `ENV=prod` / `OLIST_ENV=prod` (uses `.env.prod` → unsuffixed datasets) and deploy the
-container per `p6_orchestration/olist_orchestration/DEPLOY.md` (Cloud Run jobs + Secret Manager).
+
+> For prod deployment (GCE VM + Docker + nginx auth proxy), see **[`notes/setup.prod.md`](setup.prod.md)**.
+> Do not follow the steps in this file for prod — dataset names, config files, and the
+> deploy process are different.
 
 ---
 
