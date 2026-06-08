@@ -1,0 +1,111 @@
+version: 1
+default_environment: dev
+project_id: olist-meltano
+
+environments:
+  - name: dev
+  
+plugins:
+  extractors:
+    - name: tap-postgres
+      variant: meltanolabs
+      pip_url: git+https://github.com/MeltanoLabs/tap-postgres.git
+      config:
+        host: ${POSTGRES_HOST}
+        port: ${POSTGRES_PORT}
+        user: ${POSTGRES_USER}
+        password: ${POSTGRES_PASSWORD}
+        database: olist
+        ssl: true
+        filter_schemas:
+          - oltp
+
+      select:
+        - oltp-olist_customers.*
+        - oltp-olist_geolocation.*
+        - oltp-olist_orders.*
+        - oltp-olist_order_items.*
+        - oltp-olist_order_payments.*
+        - oltp-olist_order_reviews.*
+        - oltp-olist_products.*
+        - oltp-olist_sellers.*
+        - oltp-product_category_name_translation.*
+
+      metadata:
+        oltp-olist_customers:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - customer_id
+
+        oltp-olist_geolocation:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - geolocation_id
+
+        oltp-olist_orders:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - order_id
+
+        oltp-olist_order_items:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - order_id
+            - order_item_id
+
+        oltp-olist_order_payments:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - order_id
+            - payment_sequential
+
+        oltp-olist_order_reviews:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - review_id
+            - order_id
+
+        oltp-olist_products:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - product_id
+
+        oltp-olist_sellers:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - seller_id
+
+        oltp-product_category_name_translation:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          key-properties:
+            - product_category_name
+
+  loaders:
+    - name: target-bigquery
+      variant: z3z1ma
+      pip_url: git+https://github.com/z3z1ma/target-bigquery.git setuptools<80
+      config:
+        project: sctp-team2-project2-elt
+        dataset: olin_bronze
+        credentials_path: ${GOOGLE_APPLICATION_CREDENTIALS}
+        location: US
+        method: batch_job
+        denormalized: true
+        flattening_enabled: true
+        flattening_max_depth: 1
+        upsert: true
+        dedupe_before_upsert: true
+
+jobs:
+  - name: postgres-to-bigquery-bronze
+    tasks:
+      - tap-postgres target-bigquery

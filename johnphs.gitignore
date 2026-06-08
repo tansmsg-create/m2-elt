@@ -2,8 +2,6 @@
 **/secrets/
 **/.env
 **/.env.*
-# ...but keep the committed template.
-!**/.env.example
 
 # VS Code
 **/.vscode/*
@@ -40,14 +38,6 @@
 # Logs
 **/*.log
 
-
-# Data
-**/data/
-
-# dbt / dagster / meltano build artifacts
-**/target/
-**/dbt_packages/
-**/.meltano/
-**/.tmp_dagster_home*/
-**/dagster_home/my-work/JohnPhang/workings/*.xlsx
-my-work/JohnPhang/workings/*
+# CSV and xlsx
+**/*.csv
+**/*.xlsx
