@@ -9,3 +9,4 @@ SELECT
     CAST(review_answer_timestamp AS TIMESTAMP) AS review_answer_timestamp
 FROM {{ source('brazil_ecommerce', 'olist_order_reviews_dataset') }}
 WHERE order_id IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY id ORDER BY review_answer_timestamp DESC) = 1

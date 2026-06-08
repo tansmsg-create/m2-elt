@@ -15,3 +15,4 @@ LEFT JOIN {{ source('brazil_ecommerce', 'olist_order_items_dataset') }} AS items
     ON products.product_id = items.product_id
 WHERE
     items.order_item_id IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY id ORDER BY id DESC) = 1
