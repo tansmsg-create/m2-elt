@@ -42,9 +42,13 @@ jobs:
 
       - name: Build & push image (Cloud Build)
         run: |
-          IMAGE=$REGION-docker.pkg.dev/$PROJECT/$REPO/olist-elt:latest
+          SHA=$(git rev-parse --short HEAD)
+          BASE=$REGION-docker.pkg.dev/$PROJECT/$REPO/olist-elt
+          echo "Building version $SHA"
+          echo "APP_VERSION=$SHA" >> "$GITHUB_ENV"
           gcloud builds submit --config cloudbuild.yaml \
-            --substitutions=_IMAGE="$IMAGE" --project "$PROJECT" .
+            --substitutions=_IMAGE="$BASE:latest",_IMAGE_SHA="$BASE:$SHA",_VERSION="$SHA" \
+            --project "$PROJECT" .
 
       - name: Redeploy on VM if it is running
         run: |
@@ -53,7 +57,12 @@ jobs:
           echo "VM status: $STATUS"
           if [ "$STATUS" = "RUNNING" ]; then
             gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" \
-              --tunnel-through-iap --command="bash run-dagster.sh && docker ps"
+              --tunnel-through-iap \
+              --command="bash run-dagster.sh && echo 'Deployed APP_VERSION:' && docker exec olist-dagster printenv APP_VERSION && docker ps"
           else
             echo "VM not running ($STATUS) — skipping redeploy. Morning recreate pulls :latest."
           fi
+
+      - name: Summary
+        if: always()
+        run: echo "### Deployed version \`${APP_VERSION:-unknown}\`" >> "$GITHUB_STEP_SUMMARY"
