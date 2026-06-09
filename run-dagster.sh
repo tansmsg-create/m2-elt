@@ -34,17 +34,32 @@ docker run -d --name olist-dagster --restart unless-stopped --network dagnet \
   --env-file "$PWD/.env.prod" \
   -e DAGSTER_HOME=/opt/dagster/home \
   -v dagster_home:/opt/dagster/home \
+  -v dbt_docs:/opt/dbt-docs \
   -v "$PWD/.env.key:/secrets/sa.json:ro" \
   "$IMAGE" \
   dagster dev -h 0.0.0.0 -p 3000 -m olist_orchestration.definitions
 
 # nginx Basic-Auth proxy — the only container published to public :3000.
+# Also serves the static dbt docs site (shared dbt_docs volume) at /dbt-docs/.
 docker rm -f dagster-proxy 2>/dev/null || true
 docker run -d --name dagster-proxy --restart unless-stopped --network dagnet \
   -p 3000:3000 \
   -v "$PWD/nginx-dagster.conf:/etc/nginx/conf.d/default.conf:ro" \
   -v "$PWD/dagster.htpasswd:/etc/nginx/.htpasswd:ro" \
+  -v dbt_docs:/usr/share/nginx/dbt-docs:ro \
   nginx:stable
 
+# Generate the dbt docs site into the shared volume so nginx can serve it at /dbt-docs/.
+# Runs inside the app container (it has dbt + the prod profile + BQ creds via the env).
+# Best-effort: a docs failure (e.g. BQ unreachable) must not fail the deploy.
+echo "Generating dbt docs..."
+docker exec olist-dagster sh -c '
+  cd /app/p3_dbt_project/brazil_ecommerce &&
+  dbt docs generate --profiles-dir . --target prod &&
+  cp target/index.html target/manifest.json target/catalog.json /opt/dbt-docs/ 2>/dev/null
+' && echo "dbt docs published to /dbt-docs/" || echo "WARN: dbt docs generation skipped/failed (deploy continues)."
+
 echo "Started olist-dagster (internal) + dagster-proxy (public :3000, password-gated)."
+echo "UI:        http://<VM-IP>:3000/"
+echo "dbt docs:  http://<VM-IP>:3000/dbt-docs/"
 echo "Logs:  docker logs -f olist-dagster"
