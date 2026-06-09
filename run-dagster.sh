@@ -54,10 +54,14 @@ docker run -d --name dagster-proxy --restart unless-stopped --network dagnet \
 # Best-effort: a docs failure (e.g. BQ unreachable) must not fail the deploy.
 echo "Generating dbt docs..."
 docker exec olist-dagster sh -c '
-  cd /app/p3_dbt_project/brazil_ecommerce &&
-  dbt docs generate --profiles-dir . --target prod &&
-  cp target/index.html target/manifest.json target/catalog.json /opt/dbt-docs/ 2>/dev/null
-' && echo "dbt docs published to /dbt-docs/" || echo "WARN: dbt docs generation skipped/failed (deploy continues)."
+  cd /app/p3_dbt_project/brazil_ecommerce
+  # Catalog queries fail until the BQ datasets exist; index.html + manifest.json are
+  # still written, so publish whatever was produced regardless of the exit code.
+  dbt docs generate --profiles-dir . --target prod || true
+  for f in index.html manifest.json catalog.json; do
+    [ -f "target/$f" ] && cp "target/$f" /opt/dbt-docs/
+  done
+' && echo "dbt docs published to /dbt-docs/" || echo "WARN: dbt docs publish failed (deploy continues)."
 
 echo "Started olist-dagster (internal) + dagster-proxy (public :3000, password-gated)."
 echo "UI:        http://<VM-IP>:3000/"
