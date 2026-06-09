@@ -1,4 +1,4 @@
-version: 1
+requires_meltano: ">=4.0.0"
 default_environment: dev
 project_id: olist-meltano
 
@@ -22,7 +22,6 @@ plugins:
 
       select:
         - oltp-olist_customers.*
-        - oltp-olist_geolocation.*
         - oltp-olist_orders.*
         - oltp-olist_order_items.*
         - oltp-olist_order_payments.*
@@ -30,6 +29,7 @@ plugins:
         - oltp-olist_products.*
         - oltp-olist_sellers.*
         - oltp-product_category_name_translation.*
+        # - oltp-olist_geolocation.* # handled separately as append-only
 
       metadata:
         oltp-olist_customers:
@@ -38,11 +38,11 @@ plugins:
           key-properties:
             - customer_id
 
-        oltp-olist_geolocation:
-          replication-method: INCREMENTAL
-          replication-key: updated_at
-          #key-properties: (olist_geolocation has no natural primary key)
-            #- geolocation_id
+        # oltp-olist_geolocation:
+        #   replication-method: INCREMENTAL
+        #   replication-key: updated_at
+        #   #key-properties: (olist_geolocation has no natural primary key)
+        #     #- geolocation_id
 
         oltp-olist_orders:
           replication-method: INCREMENTAL
@@ -89,12 +89,24 @@ plugins:
           key-properties:
             - product_category_name
 
+    - name: tap-postgres-geolocation
+      inherit_from: tap-postgres
+      select:
+        - oltp-olist_geolocation.*
+      
+      metadata:
+        oltp-olist_geolocation:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          #no key-properties: as olist_geolocation has no natural primary key
+
   loaders:
     - name: target-bigquery
       variant: z3z1ma
       pip_url: git+https://github.com/z3z1ma/target-bigquery.git setuptools<80
       config:
         project: sctp-team2-project2-elt
+        # project: western-beanbag-496804-a4 # johnphs GCP project
         dataset: olin_bronze
         credentials_path: ${GOOGLE_APPLICATION_CREDENTIALS}
         location: US
@@ -105,7 +117,23 @@ plugins:
         upsert: true
         dedupe_before_upsert: true
 
+    - name: target-bigquery-append
+      inherit_from: target-bigquery
+      config:
+        upsert: false
+        dedupe_before_upsert: false
+        overwrite: false
+
 jobs:
   - name: postgres-to-bigquery-bronze
     tasks:
       - tap-postgres target-bigquery
+  
+  - name: postgres-geolocation-to-bigquery-bronze
+    tasks:
+      - tap-postgres-geolocation target-bigquery-append
+
+  - name: postgres-all-to-bigquery-bronze
+    tasks:
+      - tap-postgres target-bigquery
+      - tap-postgres-geolocation target-bigquery-append
