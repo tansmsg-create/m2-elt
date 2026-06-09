@@ -238,6 +238,75 @@ CREATE INDEX IF NOT EXISTS idx_olist_products_category_name
 CREATE INDEX IF NOT EXISTS idx_olist_geolocation_zip
     ON oltp.olist_geolocation (geolocation_zip_code_prefix);
 
+
+-- ============================================================
+-- Primary keys for Olist OLTP tables
+-- Schema: oltp
+-- 
+-- Some reasons why Primary Key can be missing in the created tables:
+-- 1. The CSV was loaded more than once using append mode.
+-- 2. pandas to_sql created the table without constraints.
+-- 3. The table was replaced, so the primary key constraint was dropped.
+-- ============================================================
+
+-- Customers
+ALTER TABLE oltp.olist_customers
+    ADD CONSTRAINT pk_olist_customers
+    PRIMARY KEY (customer_id);
+
+
+-- Orders
+ALTER TABLE oltp.olist_orders
+    ADD CONSTRAINT pk_olist_orders
+    PRIMARY KEY (order_id);
+
+
+-- Order items
+-- One order can have multiple items, so use composite PK.
+ALTER TABLE oltp.olist_order_items
+    ADD CONSTRAINT pk_olist_order_items
+    PRIMARY KEY (order_id, order_item_id);
+
+
+-- Order payments
+-- One order can have multiple payment records.
+ALTER TABLE oltp.olist_order_payments
+    ADD CONSTRAINT pk_olist_order_payments
+    PRIMARY KEY (order_id, payment_sequential);
+
+
+-- Order reviews
+-- Safer to use composite PK because review_id may not always be unique by itself.
+ALTER TABLE oltp.olist_order_reviews
+    ADD CONSTRAINT pk_olist_order_reviews
+    PRIMARY KEY (review_id, order_id);
+
+
+-- Products
+ALTER TABLE oltp.olist_products
+    ADD CONSTRAINT pk_olist_products
+    PRIMARY KEY (product_id);
+
+
+-- Sellers
+ALTER TABLE oltp.olist_sellers
+    ADD CONSTRAINT pk_olist_sellers
+    PRIMARY KEY (seller_id);
+
+
+-- Product category translation
+ALTER TABLE oltp.product_category_name_translation
+    ADD CONSTRAINT pk_product_category_name_translation
+    PRIMARY KEY (product_category_name);
+
+
+-- -- Geolocation
+-- -- Only use this if you created geolocation_id as BIGSERIAL or another unique column.
+-- ALTER TABLE oltp.olist_geolocation
+--     ADD CONSTRAINT pk_olist_geolocation
+--     PRIMARY KEY (geolocation_id);
+
+
 -- =============================================================================
 -- Foreign key constraints
 -- Append-only section: add after all tables have been created and loaded.
