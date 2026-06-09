@@ -26,7 +26,7 @@ plugins:
 
       select:
         - oltp-olist_customers.*
-        - oltp-olist_geolocation.*
+        # geolocation handled separately by tap-postgres-geolocation (append-only SCD)
         - oltp-olist_orders.*
         - oltp-olist_order_items.*
         - oltp-olist_order_payments.*
@@ -41,12 +41,6 @@ plugins:
           replication-key: updated_at
           key-properties:
             - customer_id
-
-        oltp-olist_geolocation:
-          replication-method: INCREMENTAL
-          replication-key: updated_at
-          #key-properties: # (olist_geolocation data has no natural primary key)
-            #- geolocation_zip_code_prefix
 
         oltp-olist_orders:
           replication-method: INCREMENTAL
@@ -93,6 +87,20 @@ plugins:
           key-properties:
             - product_category_name
 
+    # Geolocation has no natural primary key, so it can't be upserted/deduped like the
+    # other streams. It's extracted on its own and loaded append-only (target-bigquery-append)
+    # to keep an SCD-style history. Inherits connection/config from tap-postgres.
+    - name: tap-postgres-geolocation
+      inherit_from: tap-postgres
+      select:
+        - oltp-olist_geolocation.*
+
+      metadata:
+        oltp-olist_geolocation:
+          replication-method: INCREMENTAL
+          replication-key: updated_at
+          # no key-properties: olist_geolocation has no natural primary key
+
   loaders:
     - name: target-bigquery
       variant: z3z1ma
@@ -136,7 +144,30 @@ plugins:
           oltp-product_category_name_translation:
             __alias__: product_category_name_translation_raw
 
+    # Append-only variant for geolocation: no upsert/dedupe/overwrite, so every run
+    # appends rows (SCD-style history) into olist_geolocation_raw. Inherits everything
+    # from target-bigquery (incl. batch_size + the geolocation stream_maps alias).
+    - name: target-bigquery-append
+      inherit_from: target-bigquery
+      config:
+        upsert: false
+        dedupe_before_upsert: false
+        overwrite: false
+
 jobs:
+  # Upsert load of all keyed streams (everything except geolocation).
   - name: postgres-to-bigquery-bronze
     tasks:
       - tap-postgres target-bigquery
+
+  # Append-only load of geolocation (SCD history).
+  - name: postgres-geolocation-to-bigquery-bronze
+    tasks:
+      - tap-postgres-geolocation target-bigquery-append
+
+  # Full bronze load: keyed streams (upsert) + geolocation (append). This is the job
+  # the Dagster orchestration runs (p6_orchestration .../assets.py).
+  - name: postgres-all-to-bigquery-bronze
+    tasks:
+      - tap-postgres target-bigquery
+      - tap-postgres-geolocation target-bigquery-append

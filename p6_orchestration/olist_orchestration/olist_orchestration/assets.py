@@ -145,12 +145,16 @@ def bronze_raw_commerce(context: AssetExecutionContext):
     # 1) run the load
     if method in ("meltano_csv", "meltano_postgres"):
         if method == "meltano_postgres":
-            meltano_dir, tap = config.MELTANO_PG_DIR, "tap-postgres"
+            # The postgres path runs the combined job: keyed streams (upsert) +
+            # geolocation (append-only SCD). See p1_el/olist-meltano-pg/meltano.yml.
+            meltano_dir = config.MELTANO_PG_DIR
+            run_args = ["postgres-all-to-bigquery-bronze"]
         else:
-            meltano_dir, tap = config.MELTANO_CSV_DIR, "tap-csv"
-        context.log.info(f"Loading bronze via Meltano ({meltano_dir}) [{tap} -> target-bigquery]")
+            meltano_dir = config.MELTANO_CSV_DIR
+            run_args = ["tap-csv", "target-bigquery"]
+        context.log.info(f"Loading bronze via Meltano ({meltano_dir}) [run {' '.join(run_args)}]")
         subprocess.run(
-            ["meltano", f"--environment={config.OLIST_ENV}", "run", tap, "target-bigquery"],
+            ["meltano", f"--environment={config.OLIST_ENV}", "run", *run_args],
             cwd=meltano_dir, check=True,
         )
     else:
