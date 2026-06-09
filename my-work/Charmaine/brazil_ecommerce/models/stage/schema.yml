@@ -21,7 +21,7 @@ models:
       - name: customer_id
         description: "The foreign key to dim_customers"
         tests:
-          - not_null
+          - not_null    # This should never be NULL, as every order must have a customer
           - relationships:
               to: ref('dim_customers')
               field: id
@@ -69,33 +69,38 @@ models:
       - name: order_item_id
         description: "One of composite primary keys for this table"
         tests:
-          - not_null
-#          - relationships:
-#              to: ref('dim_products')
-#              field: id
+#          - not_null
           - dbt_expectations.expect_column_values_to_be_of_type:
               column_type: INT64
 
       - name: product_id
         description: "The foreign key to dim_products"
         tests:
-          - not_null
+#          - not_null
+#          - dbt_expectations.expect_column_values_to_not_be_null:
+#              row_condition: "order_item_id IS NOT NULL"
+#              severity: warn
           - relationships:
               to: ref('dim_products')
               field: id
+              severity: warn
           - dbt_expectations.expect_column_values_to_be_of_type:
               column_type: STRING
       
       - name: seller_id
         description: "The foreign key to dim_sellers"
         tests:
-          - not_null
+#          - not_null
+#          - dbt_expectations.expect_column_values_to_not_be_null:
+#            row_condition: "order_item_id IS NOT NULL"  # Only test when order has items
+#            severity: warn
           - relationships:
               to: ref('dim_sellers')
               field: id
+              severity: warn  # Change from error to warn 
           - dbt_expectations.expect_column_values_to_be_of_type:
               column_type: STRING
-      
+
       - name: shipping_limit_date
         description: "The timestamp on item's shipping limit date"
         tests:

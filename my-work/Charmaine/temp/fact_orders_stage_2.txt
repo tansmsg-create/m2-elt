@@ -72,20 +72,13 @@ joined_table AS (
         c.payment_value
         
     FROM source_a orders
-    LEFT JOIN source_b b ON orders.order_id = b.order_id
+    INNER JOIN source_b b ON orders.order_id = b.order_id
     LEFT JOIN source_c c ON orders.order_id = c.order_id
     -- Deduplicate: Keep one row per order-item, with the first payment method
-    -- FIX: Handle deduplication safely - only for rows that have order_item_id
     QUALIFY ROW_NUMBER() OVER (
-    PARTITION BY orders.order_id, COALESCE(b.order_item_id, 0)
-    ORDER BY 
---        CASE WHEN c.payment_sequential IS NULL THEN 999 ELSE c.payment_sequential END,
-        orders.customer_id
-) = 1
---    QUALIFY ROW_NUMBER() OVER (
---        PARTITION BY orders.order_id, b.order_item_id 
---        ORDER BY c.payment_sequential
---    ) = 1
+        PARTITION BY orders.order_id, b.order_item_id 
+        ORDER BY c.payment_sequential
+    ) = 1
 ),
 
 -- Validate numeric ranges (no need to handle NULLs for status/type anymore)
@@ -177,14 +170,8 @@ quality_checks AS (
             WHEN payment_type = 'not_defined' OR payment_value IS NULL
             THEN TRUE 
             ELSE FALSE 
-        END AS has_missing_payment_info,
-
-        -- ADD THIS: Flag orders without items (for debugging)
-        CASE 
-            WHEN order_item_id IS NULL THEN TRUE 
-            ELSE FALSE 
-        END AS has_no_items
-
+        END AS has_missing_payment_info
+        
     FROM validated_data
 )
 
@@ -214,7 +201,6 @@ SELECT
     is_high_value_product,
     has_missing_delivery_date,
     is_long_delivery,
-    has_missing_payment_info,
-    has_no_items
+    has_missing_payment_info
 FROM quality_checks
 ORDER BY order_purchase_timestamp DESC
