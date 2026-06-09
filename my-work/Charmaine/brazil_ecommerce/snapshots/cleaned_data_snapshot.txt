@@ -1,3 +1,4 @@
+-- run only on update dbt run of models/fact_orders_stage.sql
 -- snapshots/cleaned_data_snapshot.sql
 
 {% snapshot cleaned_data_snapshot %}
