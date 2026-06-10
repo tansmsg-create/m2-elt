@@ -69,6 +69,26 @@ curl -s -o /dev/null -w "%{http_code}\n" https://olist-wordcloud-513410438758.us
 - For CI deploys of the portal, also set the GitHub repo **Variable** `WORDCLOUD_URL`
   to the same value (consumed by `.github/workflows/deploy-ops-portal.yml`).
 
+## Translation (English mode for non-PT readers)
+
+Reviews are Portuguese; the sidebar **Language** toggle ("English (translated)") renders
+the word clouds + frequency charts in English via the Cloud Translation API. Only the
+unique top terms/bigrams are translated (cached per session), so cost is negligible.
+
+One-time setup (done 2026-06-10):
+
+```bash
+gcloud services enable translate.googleapis.com --project sctp-team2-project2-elt
+gcloud projects add-iam-policy-binding sctp-team2-project2-elt \
+  --member="serviceAccount:sctp-team2-project2-elt@sctp-team2-project2-elt.iam.gserviceaccount.com" \
+  --role="roles/cloudtranslate.user" --condition=None
+```
+
+Lib: `google-cloud-translate==3.15.5` (in requirements.txt). Code: `translate.py`.
+
+> Tip for the exec demo: COO uses **Português (original)**; CEO flips to
+> **English (translated)**. Same data, just relabelled.
+
 ## CI
 
 `.github/workflows/deploy-wordcloud.yml` redeploys the app on push to `main` touching

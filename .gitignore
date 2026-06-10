@@ -51,3 +51,7 @@
 **/.tmp_dagster_home*/
 **/dagster_home/my-work/JohnPhang/workings/*.xlsx
 my-work/JohnPhang/workings/*
+
+# HoongJun personal notebook readmes
+my-work/HoongJun/dev/p5_analytics/notebooks/eda/readme.eda.md
+my-work/HoongJun/dev/p5_analytics/notebooks/mlp/readme-mlp.md
