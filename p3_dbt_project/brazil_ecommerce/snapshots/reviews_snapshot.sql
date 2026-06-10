@@ -53,6 +53,7 @@ SELECT
     review_comment_message,
     review_answer_timestamp,
     CAST(start_date AS TIMESTAMP) AS start_at,
+    CAST(review_answer_timestamp AS TIMESTAMP) AS review_answer_timestamp, 
     CAST(LEAD(start_date) OVER (PARTITION BY review_id ORDER BY start_date) AS TIMESTAMP) AS end_at,
     IF(LEAD(start_date) OVER (PARTITION BY review_id ORDER BY start_date) IS NULL, CURRENT_TIMESTAMP(), NULL) AS updated_at
 
