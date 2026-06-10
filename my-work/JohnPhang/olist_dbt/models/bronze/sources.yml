@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: olist_bronze
+    database: sctp-team2-project2-elt
+    schema: olin_bronze
+    tables:
+      - name: oltp_olist_customers
+      - name: oltp_olist_orders
+      - name: oltp_olist_order_items
+      - name: oltp_olist_order_payments
+      - name: oltp_olist_order_reviews
+      - name: oltp_olist_products
+      - name: oltp_olist_sellers
+      - name: oltp_olist_geolocation
+      - name: oltp_product_category_name_translation
